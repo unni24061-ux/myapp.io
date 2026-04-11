@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S4 CSE Syllabus Tracker</title>
+    <!-- External Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Smooth scrolling and hidden scrollbars for clean UI */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Animations */
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom progress bar transition */
+        .progress-transition { transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 pb-20">
+
+    <!-- Sticky Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 px-6 py-4 flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-100">
+                <i data-lucide="book-check" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-slate-800">S4 CSE Tracker</h1>
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Syllabus Completion Manager</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-6">
+            <div class="hidden md:flex flex-col items-end">
+                <span id="overall-percentage-text" class="text-sm font-bold text-indigo-600">0% Mastered</span>
+                <div class="w-40 h-2 bg-slate-100 rounded-full overflow-hidden mt-1.5 border border-slate-200">
+                    <div id="overall-progress-bar" class="h-full bg-indigo-600 progress-transition" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-8">
+        <!-- Navigation Tabs -->
+        <nav id="tab-container" class="flex gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide items-center">
+            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all bg-indigo-600 text-white shadow-lg shadow-indigo-200 whitespace-nowrap">
+                <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+            </button>
+            <!-- Subject tabs will be injected here -->
+        </nav>
+
+        <!-- View Content (Dashboard or Subject Details) -->
+        <div id="view-content" class="animate-fade-in">
+            <!-- Dynamic content injected via JavaScript -->
+        </div>
+    </main>
+
+    <!-- Milestone Notification Badge -->
+    <div id="milestone-badge" class="fixed bottom-8 right-8 z-50 hidden transform transition-all duration-500">
+        <div class="bg-emerald-500 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 font-bold border-2 border-emerald-400">
+            <div class="bg-white/20 p-1.5 rounded-lg backdrop-blur-sm">
+                <i data-lucide="award" class="w-5 h-5"></i>
+            </div>
+            <span id="milestone-text">LEVEL UP: 25% COMPLETE</span>
+        </div>
+    </div>
+
+    <script>
+        // Syllabus content extracted from your PDF
+        const SYLLABUS_DATA = {
+            maths: {
+                title: "Mathematics 4 (Graph Theory)",
+                icon: 'calculator',
+                color: "#6366f1",
+                modules: [
+                    { id: 1, name: "Introduction to Graphs", topics: ["Basic definitions & Application of graphs", "Finite and infinite graphs", "Incidence and Degree", "Isolated vertex, Pendant vertex and Null graph", "Graph Isomorphism", "Sub graphs", "Walks, Paths and circuits", "Connected & Disconnected graphs"] },
+                    { id: 2, name: "Euler & Hamiltonian Graphs", topics: ["Euler graphs", "Operations on Graphs", "Hamiltonian paths and circuits", "Travelling Salesman Problem", "Edge & Vertex Connectivity", "Types of directed graphs"] },
+                    { id: 3, name: "Trees & Shortest Path Algorithms", topics: ["Properties of Trees", "Distance and centers in a tree", "Rooted and binary trees", "Spanning trees", "Prim's & Kruskal's algorithm", "Dijkstra's shortest path", "Floyd-Warshall algorithm"] },
+                    { id: 4, name: "Matrix Representation & Coloring", topics: ["Adjacency & Incidence Matrix", "Circuit & Path Matrix", "Graph Coloring", "Chromatic number", "Chromatic polynomial", "Greedy colouring algorithm"] }
+                ]
+            },
+            dbms: {
+                title: "Database Management Systems",
+                icon: 'database',
+                color: "#10b981",
+                modules: [
+                    { id: 1, name: "Architecture & ER Modeling", topics: ["Three-Schema Architecture", "Database Languages & Interfaces", "Client/Server Architectures", "Entity Types, Sets, Attributes, Keys", "Relationship Types & Constraints", "Weak Entity Types", "ER Design Case Study"] },
+                    { id: 2, name: "Relational Model & SQL", topics: ["Relational Database Constraints", "Relational Algebra", "Relational Calculus", "SQL: DDL & DML", "Assertions, Triggers, Views", "ER-to-Relational Mapping"] },
+                    { id: 3, name: "Normalization & Recovery", topics: ["Functional Dependencies", "1NF, 2NF, and 3NF", "Transaction Processing & Properties", "Serializability & Concurrency Control", "Two-Phase Locking (2PL)", "Recovery: Deferred/Immediate Update"] },
+                    { id: 4, name: "NoSQL Concepts", topics: ["CAP Theorem & BASE properties", "Key-Value & Graph Stores", "Column Family & Document Stores", "NoSQL Architectural Patterns", "Use Cases and limitations"] }
+                ]
+            },
+            os: {
+                title: "Operating Systems",
+                icon: 'book-open',
+                color: "#f59e0b",
+                modules: [
+                    { id: 1, name: "Processes & Scheduling", topics: ["OS Services and Kernels", "Linux vs Unix Kernels", "Process States & API", "Context Switching", "Boot Sequence", "Threads & Multithreading", "CPU Scheduling Algorithms", "Linux CFS Scheduler"] },
+                    { id: 2, name: "Synchronization & Deadlocks", topics: ["Spin Locks & Mutexes", "Semaphores (Binary/Counting)", "Producer-Consumer Problem", "Reader-Writer Problem", "Deadlock Prevention & Avoidance", "Deadlock Detection & Recovery", "Dining Philosophers Problem"] },
+                    { id: 3, name: "Memory Management", topics: ["Address Translation", "Segmentation", "Paging & Page Tables", "TLB (Translation Lookaside Buffer)", "Virtual Memory & Swap Space", "Page Replacement Policies", "Thrashing"] },
+                    { id: 4, name: "I/O & File Systems", topics: ["Interrupts & DMA", "Disk Scheduling Algorithms", "Linux I/O Schedulers", "File System Interface & Links", "Directories & ACLs", "Inodes & Indexing", "Linux VFS Objects"] }
+                ]
+            },
+            coa: {
+                title: "Computer Organization",
+                icon: 'cpu',
+                color: "#ef4444",
+                modules: [
+                    { id: 1, name: "Basic Structure & Assembly", topics: ["Functional Units", "Memory Map & Endianness", "CISC vs RISC", "Assembly Language Programming", "Instruction Execution Cycle", "Addressing Modes", "Stored Program Concept"] },
+                    { id: 2, name: "Processor Microarchitecture", topics: ["Single-Cycle Datapath", "Single-Cycle Control", "Pipelined Datapath", "Pipelined Control", "Data & Control Hazards", "Solving Hazards"] },
+                    { id: 3, name: "Memory Hierarchy", topics: ["Cache Mapping & Replacement", "Multi-Level Caches", "Write Policies", "Virtual Memory Translation", "Page Tables & TLBs", "Memory Protection"] },
+                    { id: 4, name: "I/O Organization", topics: ["Programmed I/O", "Interrupt Driven I/O", "Direct Memory Access (DMA)", "Embedded I/O Systems", "Serial I/O & Peripherals"] }
+                ]
+            }
+        };
+
+        // App State
+        let state = {
+            completedTopics: JSON.parse(localStorage.getItem('cse_tracker_progress')) || {},
+            activeTab: 'dashboard',
+            expandedModules: new Set()
+        };
+
+        function saveState() {
+            localStorage.setItem('cse_tracker_progress', JSON.stringify(state.completedTopics));
+        }
+
+        function init() {
+            renderTabs();
+            renderView();
+            updateProgress();
+        }
+
+        function renderTabs() {
+            const container = document.getElementById('tab-container');
+            let html = `<button onclick="switchTab('dashboard')" class="tab-btn flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${state.activeTab === 'dashboard' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-indigo-600'} whitespace-nowrap">
+                <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+            </button>`;
+
+            Object.keys(SYLLABUS_DATA).forEach(key => {
+                const sub = SYLLABUS_DATA[key];
+                const activeClass = state.activeTab === key ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-indigo-600';
+                html += `<button onclick="switchTab('${key}')" class="tab-btn flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${activeClass} whitespace-nowrap">
+                    <i data-lucide="${sub.icon}" class="w-4 h-4"></i> ${key.toUpperCase()}
+                </button>`;
+            });
+            container.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function switchTab(tabId) {
+            state.activeTab = tabId;
+            renderTabs();
+            renderView();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleTopic(sub, modId, topic) {
+            const id = `${sub}-${modId}-${topic}`;
+            state.completedTopics[id] = !state.completedTopics[id];
+            saveState();
+            renderView();
+            updateProgress();
+        }
+
+        function toggleModule(id) {
+            if (state.expandedModules.has(id)) {
+                state.expandedModules.delete(id);
+            } else {
+                state.expandedModules.add(id);
+            }
+            renderView();
+        }
+
+        function getStats() {
+            return Object.keys(SYLLABUS_DATA).map(key => {
+                const subject = SYLLABUS_DATA[key];
+                let total = 0;
+                let done = 0;
+                subject.modules.forEach(mod => {
+                    mod.topics.forEach(topic => {
+                        total++;
+                        if (state.completedTopics[`${key}-${mod.id}-${topic}`]) done++;
+                    });
+                });
+                return {
+                    name: subject.title,
+                    key: key,
+                    completed: done,
+                    remaining: total - done,
+                    percentage: total > 0 ? Math.round((done / total) * 100) : 0,
+                    color: subject.color
+                };
+            });
+        }
+
+        function updateProgress() {
+            const stats = getStats();
+            const total = stats.reduce((a, b) => a + (b.completed + b.remaining), 0);
+            const done = stats.reduce((a, b) => a + b.completed, 0);
+            const overall = total > 0 ? Math.round((done / total) * 100) : 0;
+
+            document.getElementById('overall-percentage-text').innerText = `${overall}% Mastered`;
+            document.getElementById('overall-progress-bar').style.width = `${overall}%`;
+
+            const badge = document.getElementById('milestone-badge');
+            if (overall >= 25) {
+                badge.classList.remove('hidden', 'translate-y-10', 'opacity-0');
+                badge.classList.add('translate-y-0', 'opacity-100');
+                const text = overall === 100 ? "GOAL ACHIEVED: 100%" : `${overall >= 75 ? 'ALMOST DONE' : overall >= 50 ? 'MIDWAY' : 'STARTED'}: ${overall}%`;
+                document.getElementById('milestone-text').innerText = text;
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function renderView() {
+            const container = document.getElementById('view-content');
+            const stats = getStats();
+
+            if (state.activeTab === 'dashboard') {
+                container.innerHTML = `
+                    <div class="space-y-8 animate-fade-in">
+                        <!-- Stats Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            ${stats.map(s => `
+                                <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                                    <div class="flex justify-between items-start mb-4">
+                                        <div class="p-3 rounded-2xl bg-slate-50" style="color: ${s.color}">
+                                            <i data-lucide="${SYLLABUS_DATA[s.key].icon}" class="w-6 h-6"></i>
+                                        </div>
+                                        <span class="text-2xl font-black" style="color: ${s.color}">${s.percentage}%</span>
+                                    </div>
+                                    <h3 class="font-bold text-slate-800 mb-1 truncate">${s.name}</h3>
+                                    <p class="text-xs font-semibold text-slate-400 mb-4 uppercase tracking-tighter">${s.completed} Topics Done</p>
+                                    <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                        <div class="h-full progress-transition" style="width: ${s.percentage}%; background-color: ${s.color}"></div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <!-- Charts Section -->
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div class="lg:col-span-2 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                                <h3 class="text-xl font-bold mb-8 flex items-center gap-3 text-slate-800">
+                                    <i data-lucide="bar-chart-3" class="w-6 h-6 text-indigo-600"></i> Subject Performance
+                                </h3>
+                                <div class="h-[350px]"><canvas id="barChart"></canvas></div>
+                            </div>
+                            <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col items-center justify-center">
+                                <h3 class="text-xl font-bold mb-2 text-slate-800">Total Progress</h3>
+                                <div class="relative h-64 w-64"><canvas id="pieChart"></canvas></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                initCharts(stats);
+            } else {
+                const sub = SYLLABUS_DATA[state.activeTab];
+                const subStat = stats.find(s => s.key === state.activeTab);
+                container.innerHTML = `
+                    <div class="animate-fade-in">
+                        <!-- Subject Hero -->
+                        <div class="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden mb-8">
+                            <div class="px-8 py-12 text-white relative overflow-hidden" style="background: linear-gradient(135deg, ${sub.color}, ${sub.color}cc)">
+                                <div class="absolute -right-10 -bottom-10 opacity-10">
+                                    <i data-lucide="${sub.icon}" class="w-64 h-64"></i>
+                                </div>
+                                <div class="relative z-10">
+                                    <div class="flex items-center gap-5 mb-6">
+                                        <div class="bg-white/20 p-4 rounded-2xl backdrop-blur-md border border-white/20">
+                                            <i data-lucide="${sub.icon}" class="w-10 h-10 text-white"></i>
+                                        </div>
+                                        <div>
+                                            <h2 class="text-4xl font-black tracking-tight">${sub.title}</h2>
+                                            <p class="text-white/80 font-semibold tracking-wide mt-1 uppercase text-sm">Computer Science Engineering • Semester S4</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-wrap items-center gap-4 mt-8">
+                                        <div class="bg-white text-slate-900 px-6 py-3 rounded-2xl shadow-lg flex items-center gap-3">
+                                            <span class="text-xs uppercase font-black text-slate-400">Mastery</span>
+                                            <span class="text-2xl font-black">${subStat.percentage}%</span>
+                                        </div>
+                                        <div class="bg-white/20 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/20 flex items-center gap-3">
+                                            <span class="text-xs uppercase font-black text-white/60">Done</span>
+                                            <span class="text-2xl font-black">${subStat.completed}</span>
+                                        </div>
+                                        <div class="bg-white/20 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/20 flex items-center gap-3 text-white/50">
+                                            <span class="text-xs uppercase font-black">Left</span>
+                                            <span class="text-2xl font-black">${subStat.remaining}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Modules Checklist -->
+                            <div class="p-6 md:p-10 space-y-6">
+                                ${sub.modules.map(mod => {
+                                    const modId = `${state.activeTab}-${mod.id}`;
+                                    const isExpanded = state.expandedModules.has(modId);
+                                    const modDoneCount = mod.topics.filter(t => state.completedTopics[`${state.activeTab}-${mod.id}-${t}`]).length;
+                                    const modProgress = Math.round((modDoneCount / mod.topics.length) * 100);
+
+                                    return `
+                                        <div class="border border-slate-100 rounded-[2rem] overflow-hidden transition-all duration-300 ${isExpanded ? 'shadow-lg bg-white ring-1 ring-slate-100' : 'bg-slate-50/50 hover:bg-white'}">
+                                            <button onclick="toggleModule('${modId}')" class="w-full flex items-center justify-between p-6 text-left group">
+                                                <div class="flex items-center gap-5">
+                                                    <div class="flex items-center justify-center w-12 h-12 rounded-2xl ${modProgress === 100 ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-100 text-indigo-700'} font-black text-lg transition-colors">
+                                                        ${modProgress === 100 ? '<i data-lucide="check" class="w-6 h-6"></i>' : mod.id}
+                                                    </div>
+                                                    <div>
+                                                        <h4 class="font-bold text-slate-800 text-lg group-hover:text-indigo-600 transition-colors">${mod.name}</h4>
+                                                        <div class="flex items-center gap-3 mt-1">
+                                                            <div class="w-24 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                                                <div class="h-full bg-indigo-600 transition-all duration-500" style="width: ${modProgress}%"></div>
+                                                            </div>
+                                                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${modDoneCount} / ${mod.topics.length} Units</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="p-2 rounded-xl bg-slate-100 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-all">
+                                                    <i data-lucide="${isExpanded ? 'chevron-up' : 'chevron-down'}" class="w-5 h-5"></i>
+                                                </div>
+                                            </button>
+                                            
+                                            ${isExpanded ? `
+                                                <div class="bg-white border-t border-slate-50 p-3 space-y-1">
+                                                    ${mod.topics.map(topic => {
+                                                        const isDone = state.completedTopics[`${state.activeTab}-${mod.id}-${topic}`];
+                                                        return `
+                                                            <div onclick="toggleTopic('${state.activeTab}', ${mod.id}, '${topic}')" 
+                                                                 class="flex items-center gap-5 p-4 rounded-2xl cursor-pointer transition-all group/topic ${isDone ? 'bg-indigo-50/30' : 'hover:bg-slate-50'}">
+                                                                <div class="transition-transform duration-300 group-active/topic:scale-90">
+                                                                    <i data-lucide="${isDone ? 'check-circle-2' : 'circle'}" 
+                                                                       class="w-7 h-7 ${isDone ? 'text-indigo-600 fill-indigo-50' : 'text-slate-300'}"></i>
+                                                                </div>
+                                                                <span class="text-base leading-relaxed ${isDone ? 'text-slate-400 line-through font-medium' : 'text-slate-700 font-semibold'} transition-all">
+                                                                    ${topic}
+                                                                </span>
+                                                            </div>
+                                                        `;
+                                                    }).join('')}
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            lucide.createIcons();
+        }
+
+        function initCharts(stats) {
+            const barCtx = document.getElementById('barChart');
+            if (barCtx) {
+                new Chart(barCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: stats.map(s => s.key.toUpperCase()),
+                        datasets: [
+                            {
+                                label: 'Completed',
+                                data: stats.map(s => s.completed),
+                                backgroundColor: stats.map(s => s.color),
+                                borderRadius: 12,
+                                borderSkipped: false,
+                            },
+                            {
+                                label: 'Remaining',
+                                data: stats.map(s => s.remaining),
+                                backgroundColor: '#f1f5f9',
+                                borderRadius: 12,
+                                borderSkipped: false,
+                            }
+                        ]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: '#1e293b',
+                                padding: 12,
+                                cornerRadius: 12,
+                                titleFont: { size: 14, weight: 'bold' },
+                                bodyFont: { size: 12 }
+                            }
+                        },
+                        scales: {
+                            x: { stacked: true, grid: { display: false }, ticks: { display: false }, border: { display: false } },
+                            y: { stacked: true, grid: { display: false }, border: { display: false }, ticks: { font: { weight: 'bold', size: 12 } } }
+                        }
+                    }
+                });
+            }
+
+            const pieCtx = document.getElementById('pieChart');
+            if (pieCtx) {
+                const totalDone = stats.reduce((a, b) => a + b.completed, 0);
+                const totalRemaining = stats.reduce((a, b) => a + b.remaining, 0);
+                new Chart(pieCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Done', 'Left'],
+                        datasets: [{
+                            data: [totalDone, totalRemaining],
+                            backgroundColor: ['#4f46e5', '#f1f5f9'],
+                            hoverOffset: 4,
+                            borderWidth: 0,
+                            cutout: '80%'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        animation: { animateScale: true }
+                    }
+                });
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
